@@ -1,0 +1,88 @@
+# Special loads query / NOTOC lite
+
+# This sample query creates a simplified list of special loads (DGR and AVI) on a flight from data available in ONE Record (DM 3.0.0 and API 2.0.0)
+# Requires to bind a valid URI of a LO of type cargo:TransportMovement of the flight for which the list shall be created
+
+
+prefix : <https://onerecord.iata.org/ns/cargo#>
+prefix ccodes: <https://onerecord.iata.org/ns/coreCodeLists#>
+
+select distinct ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?goodsDesc ?uld_number ?shc ?piece_count ?total_weight (sum(?weight) as ?total_weight) (count(?piece) as ?piece_count) where{
+
+    select distinct ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?goodsDesc ?uld_number ?piece ?shc ?weight (group_concat (distinct str(?notocGoods); SEPARATOR=" ") as ?shc) where {
+
+        bind(<TransportMovementURI> as ?flight)
+
+        values ?notocGoods { ccodes:SpecialHandlingCode_AVI ccodes:DangerousGoodsCode_RRE ccodes:DangerousGoodsCode_RRW ccodes:DangerousGoodsCode_RRY ccodes:DangerousGoodsCode_RSB ccodes:DangerousGoodsCode_RSC ccodes:DangerousGoodsCode_CAO ccodes:DangerousGoodsCode_ELI ccodes:DangerousGoodsCode_ELM ccodes:DangerousGoodsCode_RCM ccodes:DangerousGoodsCode_RCL ccodes:DangerousGoodsCode_RFW ccodes:DangerousGoodsCode_ICE ccodes:DangerousGoodsCode_REX ccodes:DangerousGoodsCode_RCX ccodes:DangerousGoodsCode_RGX ccodes:DangerousGoodsCode_RLI ccodes:DangerousGoodsCode_RLM ccodes:DangerousGoodsCode_RBI ccodes:DangerousGoodsCode_RBM ccodes:DangerousGoodsCode_RXB ccodes:DangerousGoodsCode_RXC ccodes:DangerousGoodsCode_RXD ccodes:DangerousGoodsCode_RXE ccodes:DangerousGoodsCode_RXG ccodes:DangerousGoodsCode_RXS ccodes:DangerousGoodsCode_RFG ccodes:DangerousGoodsCode_RFL ccodes:DangerousGoodsCode_RFS ccodes:DangerousGoodsCode_RIS ccodes:DangerousGoodsCode_EBI ccodes:DangerousGoodsCode_EBM ccodes:DangerousGoodsCode_MAG ccodes:DangerousGoodsCode_RMD ccodes:DangerousGoodsCode_RNG ccodes:DangerousGoodsCode_ROP ccodes:DangerousGoodsCode_ROX ccodes:DangerousGoodsCode_RPB ccodes:DangerousGoodsCode_RPG ccodes:DangerousGoodsCode_RSB ccodes:DangerousGoodsCode_RRW ccodes:DangerousGoodsCode_RRY ccodes:DangerousGoodsCode_RSC }
+
+        ?flight :loadingActions ?loading.
+        ?flight :transportIdentifier ?flight_number.
+        ?flight :arrivalLocation ?arrival.
+        ?flight :movementTimes ?dep_mov_time.
+        ?dep_mov_time :direction ccodes:OUTBOUND.
+        ?dep_mov_time :movementTimeType :ACTUAL.
+        ?dep_mov_time :movementMilestone ccodes:MovementIndicator_AO.
+        ?dep_mov_time :movementTimestamp ?departure_time.
+        ?arrival :locationCodes ?arr_codeElement.
+        ?arr_codeElement :code ?arrival_location.
+        ?flight :departureLocation ?departure.
+        ?departure :locationCodes ?dep_codeElement.
+        ?dep_codeElement :code ?departure_location.
+        ?loading :loadingType :LOADING.
+        ?loading :actionTimeType :ACTUAL.
+        optional{
+            ?loading :loadedUnits ?uld.
+            ?uld :inUnitComposition ?unitComposition.
+            ?uld :uldSerialNumber ?uld_number.
+            ?unitComposition :compositionActions ?composing.
+            ?composing :compositionType :COMPOSITION.
+        ?composing :actionTimeType :ACTUAL.
+            ?composing :composedPieces ?piece.
+            ?piece :grossWeight ?weightValue.
+            ?weightValue :numericalValue ?weight.
+            ?piece :ofShipment ?shipment.
+            ?piece :specialHandlingCodes ?notocGoods.
+            ?piece :specialHandlingCodes ?shc_code.
+            ?shipment :goodsDescription ?goodsDesc.
+            optional{
+            ?shipment :waybill ?hawb.
+            ?hawb :masterWaybill ?mawb.
+            ?mawb :waybillType :MASTER.
+            ?mawb :waybillPrefix ?pref.
+            ?mawb :waybillNumber ?no.
+        }
+            optional{
+            ?shipment :waybill ?dawb.
+            ?dawb :waybillType :DIRECT.
+            ?dawb :waybillPrefix ?pref.
+            ?dawb :waybillNumber ?no.
+        }
+        }
+        optional{
+            ?loading :loadedPieces ?piece.
+            ?piece :grossWeight ?weightValue.
+            ?weightValue :numericalValue ?weight.
+            ?piece :ofShipment ?shipment.
+            ?piece :specialHandlingCodes ?notocGoods.
+            ?piece :specialHandlingCodes ?shc_code.
+            ?shipment :goodsDescription ?goodsDesc.
+            OPTIONAL{
+            ?shipment :waybill ?hawb.
+            ?hawb :masterWaybill ?mawb.
+            ?mawb :waybillType :MASTER.
+            ?mawb :waybillPrefix ?pref.
+            ?mawb :waybillNumber ?no.
+        }
+            optional{
+            ?shipment :waybill ?dawb.
+            ?dawb :waybillType :DIRECT.
+            ?dawb :waybillPrefix ?pref.
+            ?dawb :waybillNumber ?no.
+        }
+        }
+
+      bind(concat(?pref, "-", ?no) AS ?waybill_number)
+
+    } group by ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?uld_number ?goodsDesc ?piece
+    having(?waybill_number != "")
+} group by ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?goodsDesc ?uld_number ?shc

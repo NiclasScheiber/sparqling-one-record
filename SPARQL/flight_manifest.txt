@@ -1,0 +1,76 @@
+# Flight manifest query
+
+# This sample query creates a simplified flight manifest from data available in ONE Record (DM 3.0.0 and API 2.0.0)
+# Requires to bind a valid URI of a LO of type cargo:TransportMovement of the flight which shall be manifested
+
+prefix : <https://onerecord.iata.org/ns/cargo#>
+prefix ccodes: <https://onerecord.iata.org/ns/coreCodeLists#>
+
+select distinct ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?goodsDesc ?uld_number ?piece_count ?total_weight (sum(?weight) as ?total_weight) (count(?piece) as ?piece_count) where {
+
+    bind(<TransportMovementURI> as ?flight)
+    ?flight :loadingActions ?loading.
+    ?flight :transportIdentifier ?flight_number.
+    ?flight :arrivalLocation ?arrival.
+    ?flight :movementTimes ?dep_mov_time.
+    ?dep_mov_time :direction ccodes:OUTBOUND.
+    ?dep_mov_time :movementTimeType :ACTUAL.
+    ?dep_mov_time :movementMilestone ccodes:MovementIndicator_AO.
+    ?dep_mov_time :movementTimestamp ?departure_time.
+    ?arrival :locationCodes ?arr_codeElement.
+    ?arr_codeElement :code ?arrival_location.
+    ?flight :departureLocation ?departure.
+    ?departure :locationCodes ?dep_codeElement.
+    ?dep_codeElement :code ?departure_location.
+    ?loading :loadingType :LOADING.
+    ?loading :actionTimeType :ACTUAL.
+    optional{
+        ?loading :loadedUnits ?uld.
+        ?uld :inUnitComposition ?unitComposition.
+        ?uld :uldSerialNumber ?uld_number.
+        ?unitComposition :compositionActions ?composing.
+        ?composing :compositionType :COMPOSITION.
+    ?composing :actionTimeType :ACTUAL.
+        ?composing :composedPieces ?piece.
+        ?piece :grossWeight ?weightValue.
+        ?weightValue :numericalValue ?weight.
+        ?piece :ofShipment ?shipment.
+        ?shipment :goodsDescription ?goodsDesc.
+        optional{
+        ?shipment :waybill ?hawb.
+        ?hawb :masterWaybill ?mawb.
+        ?mawb :waybillType :MASTER.
+        ?mawb :waybillPrefix ?pref.
+        ?mawb :waybillNumber ?no.
+    }
+        optional{
+        ?shipment :waybill ?dawb.
+        ?dawb :waybillType :DIRECT.
+        ?dawb :waybillPrefix ?pref.
+        ?dawb :waybillNumber ?no.
+    }
+    }
+    optional{
+        ?loading :loadedPieces ?piece.
+        ?piece :grossWeight ?weightValue.
+        ?weightValue :numericalValue ?weight.
+        ?piece :ofShipment ?shipment.
+        ?shipment :goodsDescription ?goodsDesc.
+        OPTIONAL{
+        ?shipment :waybill ?hawb.
+        ?hawb :masterWaybill ?mawb.
+        ?mawb :waybillType :MASTER.
+        ?mawb :waybillPrefix ?pref.
+        ?mawb :waybillNumber ?no.
+    }
+        optional{
+        ?shipment :waybill ?dawb.
+        ?dawb :waybillType :DIRECT.
+        ?dawb :waybillPrefix ?pref.
+        ?dawb :waybillNumber ?no.
+    }
+    }
+
+  bind(concat(?pref, "-", ?no) AS ?waybill_number)
+
+} group by ?flight_number ?departure_time ?arrival_location ?departure_location ?waybill_number ?uld_number ?goodsDesc
