@@ -19,7 +19,7 @@ select distinct ?flight_number ?departure_time ?arrival_location ?departure_loca
         ?flight :transportIdentifier ?flight_number.
         ?flight :arrivalLocation ?arrival.
         ?flight :movementTimes ?dep_mov_time.
-        ?dep_mov_time :direction ccodes:OUTBOUND.
+        ?dep_mov_time :direction :OUTBOUND.
         ?dep_mov_time :movementTimeType :ACTUAL.
         ?dep_mov_time :movementMilestone ccodes:MovementIndicator_AO.
         ?dep_mov_time :movementTimestamp ?departure_time.

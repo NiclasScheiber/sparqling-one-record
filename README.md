@@ -37,9 +37,33 @@ The repository includes sample SPARQL queries for selected, simplified air cargo
 
 ## Test data
 
-This repository contains ONE Record test data to try the SPARQL queries and a script to shoot it onto a ONE Record Server. The test data was randomly generated as part of the Digital Avatar sub-project of research project Digitales Testfeld Air Cargo (DTAC), sponsored by the German Ministry for Digital and Transport.
+This repository contains ONE Record test data (4.000 LogisticsObjects) to try the SPARQL queries and a script to shoot it onto a ONE Record Server. 
 
-Will be added in the near future.
+The test data was randomly generated as part of the Digital Avatar sub-project of research project Digitales Testfeld Air Cargo (DTAC), sponsored by the German Ministry for Digital and Transport.
+
+If you have an ONE Record server, such as open-source [NE:ONE](https://git.openlogisticsfoundation.org/wg-digitalaircargo/ne-one), up and running, follow these steps:
+
+1. **Open the `testdata/one_record_multipost.py` Script:**
+   - Use your preferred code editor or integrated development environment (IDE) to open the `main.py` script.
+
+2. **Locate the URL Configuration:**
+   - Within the `testdata/one_record_multipost.py` script, locate the section where the URL for the ONE Record server logistics-objects endpoint is configured.
+
+3. **Change the ONE Record Server URL:**
+   - Replace the existing URL with the URL of your own ONE Record server logistics-objects endpoint. Make sure to include the complete and accurate URL, including the protocol (e.g., `http` or `https`).
+
+4. **Save the Changes:**
+   - Save the modifications made to the `testdata/one_record_multipost.py` script.
+
+5. **Run the Script:**
+   - Execute the `testdata/one_record_multipost.py` script to initiate the application. This can typically be done by running the script from your code editor or using the command line.
+
+6. **Verify Output:**
+   - Check the output of the script to see if it successfully connects to your ONE Record server, fetches logistics objects, and processes the data according to the script's logic.
+
+**Note:** Ensure that you have the necessary dependencies and libraries installed for the script to run. If there are specific instructions or a `requirements.txt` file provided, make sure to follow those as well.
+
+Alternatively, parse the `20122023_Testdata.nt` file in some SPARQL-capable RDF store and execute the queries without the middleware server.
 
 ## Usage
 
