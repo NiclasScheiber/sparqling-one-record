@@ -2,17 +2,27 @@ from rdflib import Graph
 import requests
 import json
 
-# Enter filepath
-file_path = r'./20122023_Testdata.nt'
+# 1. Enter filepath
+file_path = r'./03032024_Testdata.nt'
 
-# Enter URL of your ONE Record Server logistics-objects endpoint
-server_url = "http://some-one-record-server.com/logistics-objects"
+# 2. Enter URL of your ONE Record Server logistics-objects endpoint, eg. "http://localhost:8080/logistics-objects"
+server_url = "<your logistics-objects endpoint>"
 
-# Assign correct prefix for LOs, matching the server_url
-with open(file_path, 'r') as file:
+# 3. If your server requires authentication: Enter the token here, eg. "abc123"
+token = "<your token>"
+
+# 4. Run the script. Ignore parsing warnings. It will take a few minutes.
+
+
+
+
+
+# Open file
+with open(file_path, 'r', encoding='utf-8', errors='replace') as file:
     file_content = file.read()
 
-file_content = file_content.replace("[your-one-record-logistics-objects-endpoint]", server_url)
+# Do not change this
+file_content = file_content.replace("https://www.someurl.com/logistics-objects", server_url)
 
 # Create initial graph
 pre_existing_graph = Graph()
@@ -66,7 +76,7 @@ def embedObjects(main_graph, sub_graph, sub_graph_json):
                                                               eo_graph_json[3:-3].replace("{", "", 1))
 
             # Replace the id of the EO in the json-version of individual graph
-            sub_graph_json = sub_graph_json.replace('"@id": "' + obj + '",', "",1)
+            sub_graph_json = sub_graph_json.replace('"@id": "' + obj + '",', "", 1)
 
             # Recall method
             sub_graph_json = embedObjects(main_graph, eo_graph, sub_graph_json)
@@ -106,7 +116,13 @@ for individual_graph_json in individual_jsons:
 
     postCounter += 1
 
-    print(postCounter, " / ", len(individual_jsons))
-
     r = requests.post(server_url, json=json.loads(individual_graph_json),
-                headers={"Content-Type": "application/ld+json"},)
+                headers={"Content-Type": "application/ld+json", "Authorization": "Bearer " + token}, )
+
+    if r.status_code == 500:
+        while r.status_code == 500:
+            print("500 error, retry")
+            r = requests.post(server_url, json=json.loads(individual_graph_json),
+                              headers={"Content-Type": "application/ld+json", "Authorization": "Bearer " + token}, )
+
+    print(postCounter, " / ", len(individual_jsons), " ", str(r.status_code), " ", r.text)
