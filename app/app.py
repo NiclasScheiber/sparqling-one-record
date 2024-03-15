@@ -10,16 +10,19 @@ main_graph = Graph()
 # Create the Flask Server
 app = Flask(__name__)
 
+# Token
+token = ""
+
 # Route for default HTTP GET request
 @app.route('/')
 def hello():
     return 'Hello, World! This "Sparqling ONE Record", a middleware server to query ONE Record Servers with SPARQL.'
 
-@app.route('/token')
+@app.route('/token', methods=['POST'])
 def token_post():
     global token
     token = request.data.decode('utf-8')
-    return 'Token set as', token
+    return 'Token set as' + token
 
 # Route to handle sparql HTTP POST request
 @app.route('/sparql', methods=['POST'])
