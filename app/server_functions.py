@@ -133,7 +133,7 @@ def ask_logistics_object_presence(uri, graph):
     return (uri, None, None) in graph
 
 # Iteratively fetch logistics objects if the query needs them
-def fetch_logistics_objects(pattern_frame, current_los_to_fetch_frame, full_los_to_fetch_frame, full_graph):
+def fetch_logistics_objects(pattern_frame, current_los_to_fetch_frame, full_los_to_fetch_frame, full_graph, token):
 
     # Initialize list of los to fetch
     new_los_to_fetch_df = pd.DataFrame(columns=['uri', 'variable', 'status_code'])
@@ -176,7 +176,7 @@ def fetch_logistics_objects(pattern_frame, current_los_to_fetch_frame, full_los_
             # Otherwise get it!
             else:
                 # Get LO as graph, add triples to main_graph
-                sub_graph, status_code = get_logistics_object_as_graph(row['uri'])
+                sub_graph, status_code = get_logistics_object_as_graph(row['uri'], token)
                 full_graph += sub_graph
 
                 # Fill status_code in los_to_fetch_df dataframe
@@ -213,4 +213,4 @@ def fetch_logistics_objects(pattern_frame, current_los_to_fetch_frame, full_los_
 
     # Iterate again through all new los to fetch
     if not new_los_to_fetch_df.empty:
-        fetch_logistics_objects(pattern_frame, new_los_to_fetch_df, full_los_to_fetch_frame, full_graph)
+        fetch_logistics_objects(pattern_frame, new_los_to_fetch_df, full_los_to_fetch_frame, full_graph, token)

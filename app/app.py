@@ -4,7 +4,6 @@ from flask import Flask, request
 from rdflib import Graph
 from rdflib.plugins.sparql import prepareQuery
 
-
 # Create main results graph to persist during a session
 main_graph = Graph()
 
@@ -16,9 +15,18 @@ app = Flask(__name__)
 def hello():
     return 'Hello, World! This "Sparqling ONE Record", a middleware server to query ONE Record Servers with SPARQL.'
 
+@app.route('/token')
+def token_post():
+    global token
+    token = request.data.decode('utf-8')
+    return 'Token set as', token
+
 # Route to handle sparql HTTP POST request
 @app.route('/sparql', methods=['POST'])
 def sparql_post():
+    if not token:
+        return "Please set the ONE Record server token to /token endpoint"
+
     if request.is_json:
         return 'This route expects a SPARQL query as plain text.'
 
@@ -53,7 +61,7 @@ def sparql_post():
     los_to_fetch_df.loc[len(los_to_fetch_df)] = [anchor_lo_uri, anchor_lo_variable, '']
 
     # Iteratively fetch and query logistics objects
-    sf.fetch_logistics_objects(pattern_df, los_to_fetch_df, los_to_fetch_df, main_graph)
+    sf.fetch_logistics_objects(pattern_df, los_to_fetch_df, los_to_fetch_df, main_graph, token)
 
     # Perform final query and return the results as dataframe in string form
     result_graph = main_graph.query(main_query)

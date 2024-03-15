@@ -6,10 +6,10 @@ import json
 file_path = r'./03032024_Testdata.nt'
 
 # 2. Enter URL of your ONE Record Server logistics-objects endpoint, eg. "http://localhost:8080/logistics-objects"
-server_url = "<your logistics-objects endpoint>"
+server_url = "http://localhost:8080/logistics-objects"
 
 # 3. If your server requires authentication: Enter the token here, eg. "abc123"
-token = "<your token>"
+token = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGYzdaSHZUNGozbldNenZkX2xuYUsySGZWWnUtYWtBLTB0TGMwLVgwc1BZIn0.eyJleHAiOjE3MDk3NTMzMjIsImlhdCI6MTcwOTcxNzMyMiwianRpIjoiZTUzZTYyMDgtNjBlMS00ZDcwLTk4YmYtYzhmZWNhYTE4ODIyIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4OTg5L3JlYWxtcy9uZW9uZSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIwYWU4OThmMy1kMjQ4LTRlYWMtODY4MS1iMDM4MWM4MmQ2YzAiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJuZW9uZS1jbGllbnQiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIioiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1uZW9uZSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiY2xpZW50SG9zdCI6IjE3Mi4yMS4wLjEiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImxvZ2lzdGljc19hZ2VudF91cmkiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvbG9naXN0aWNzLW9iamVjdHMvX2RhdGEtaG9sZGVyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LW5lb25lLWNsaWVudCIsImNsaWVudEFkZHJlc3MiOiIxNzIuMjEuMC4xIiwiY2xpZW50X2lkIjoibmVvbmUtY2xpZW50In0.yXKjY0SkHaLm1ixndlWGf3OaXaK-3herHNahIOOLuXw9HZnvPq0xLvjIQCrlX8aBDcj--1_NFh6Wmko8tUJOlE7ycMq657zwZEjbO0tPv6LPlGkDzDC6juYbji0U-5QcfjSwfnH3-JsuEBt-KCuJQ4kOU-BMsU3GtJNlqzJ0uhkLAM0FxZF-IwFgmuxma9k60Bk4T_iJ9ro3VJzEdnm8i5fFRXnec-Tsvyi5woYR1C49G1uxYFOmLFWYwTAvvHoK4XkF7m0GDA9-UPD_kaPkHEoT748aK0jnWJf7wIR58I8jUajtOMZLL9hVA8tN430x5G55vNX3TKwUHvVDhzibig"
 
 # 4. Run the script. Ignore parsing warnings. It will take a few minutes.
 
@@ -46,7 +46,7 @@ queryEO = """
     SELECT DISTINCT ?object
     WHERE {
         ?subject ?predicate ?object .
-        FILTER (regex(str(?object), "neone:"))
+        FILTER (regex(str(?object), "_:"))
     }
 """
 
@@ -114,12 +114,23 @@ postCounter = 0
 # Post everything to the ONE Record Server
 for individual_graph_json in individual_jsons:
 
+    # Create graph
+    json_graph = Graph()
+
     postCounter += 1
 
     r = requests.post(server_url, json=json.loads(individual_graph_json),
                 headers={"Content-Type": "application/ld+json", "Authorization": "Bearer " + token}, )
 
     if r.status_code == 500:
+
+        # Create a unique file name based on the timestamp
+        file_path_json = f'./jsons/error_post_{postCounter}.json'
+
+        json_graph.parse(data=individual_graph_json, format="json-ld")
+
+        json_graph.serialize(destination=file_path_json, format='json-ld')
+
         while r.status_code == 500:
             print("500 error, retry")
             r = requests.post(server_url, json=json.loads(individual_graph_json),
